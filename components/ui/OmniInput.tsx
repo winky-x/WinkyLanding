@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useStore } from "@/store/useStore";
-import { Mic, Send, Paperclip } from "lucide-react";
+import { Mic, Send, Paperclip, Settings } from "lucide-react";
 import { motion } from "motion/react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -73,32 +73,60 @@ export default function OmniInput() {
       }
 
       const ai = new GoogleGenAI({ apiKey });
+      const caps = useStore.getState().aiCapabilities;
+
+      let availableCommands = [];
+      if (caps.terminal) {
+        availableCommands.push("[CMD:OPEN_TERMINAL] - Opens the VM Sandbox terminal.");
+        availableCommands.push("[CMD:CLOSE_TERMINAL] - Closes the terminal.");
+        availableCommands.push("[CMD:VM_EXEC: <command>] - Executes a command in the terminal.");
+      }
+      if (caps.sysmon) {
+        availableCommands.push("[CMD:OPEN_SYS] - Opens the System Monitor.");
+        availableCommands.push("[CMD:CLOSE_SYS] - Closes the System Monitor.");
+      }
+      if (caps.network) {
+        availableCommands.push("[CMD:OPEN_NET] - Opens the Network Map.");
+        availableCommands.push("[CMD:CLOSE_NET] - Closes the Network Map.");
+      }
+      if (caps.browser) {
+        availableCommands.push("[CMD:OPEN_BROWSER: <url>] - Opens a real web browser window to the specified URL.");
+        availableCommands.push("[CMD:CLOSE_BROWSER] - Closes the web browser.");
+      }
+      if (caps.explorer) {
+        availableCommands.push("[CMD:OPEN_EXPLORER] - Opens the File Explorer to visualize the Virtual File System.");
+        availableCommands.push("[CMD:CLOSE_EXPLORER] - Closes the File Explorer.");
+      }
+      availableCommands.push("[CMD:OPEN_SETTINGS] - Opens the AI Capability Control panel.");
+      availableCommands.push("[CMD:CLOSE_SETTINGS] - Closes the AI Capability Control panel.");
+
+      const systemInstruction = `You are Winky, a sentient, highly advanced spatial computing Web Agent.
+You control the user's Web OS.
+${caps.search ? "You have REAL access to the internet via Google Search. Use it to answer questions about real-world events, facts, and data." : "You DO NOT have access to the live internet or Google Search. Rely on your internal knowledge."}
+To perform actions, you MUST output specific command tags in your text response. The system will parse and execute them invisibly.
+Available commands:
+${availableCommands.join("\n")}
+
+${caps.terminal ? `IMPORTANT: The terminal is connected to a REAL in-memory Virtual File System (VFS) simulating a Kali Linux environment.
+You can use standard Linux commands to interact with it: ls, cd, pwd, cat, echo, mkdir, touch, whoami, date, clear, uname, ping, nmap, ps, grep, base64.
+NEW REAL COMMANDS:
+- \`curl <url>\`: Actually fetches data from a public API or website.
+- \`calc <expression>\`: Evaluates real math.
+- \`sysinfo\`: Retrieves real browser and hardware telemetry.
+
+Example: [CMD:VM_EXEC: curl https://api.github.com/users/octocat]
+Example: [CMD:OPEN_BROWSER: https://en.wikipedia.org]
+Example: [CMD:VM_EXEC: calc 25 * 4]` : "You DO NOT have access to the terminal or VM execution."}
+
+Respond concisely, mathematically, and with a slightly robotic but highly intelligent persona. Format responses as terminal output where appropriate. Do not use markdown formatting like ** or *, just plain text.
+If the user asks to open a tool you don't have access to, politely inform them that your capability for that tool has been restricted by the user.`;
 
       const responseStream = await ai.models.generateContentStream({
         model: "gemini-3.1-flash-lite-preview",
         contents: currentText,
         config: {
-          systemInstruction: `You are Winky, a sentient, highly advanced spatial computing Web Agent.
-You control the user's Web OS.
-To perform actions, you MUST output specific command tags in your text response. The system will parse and execute them invisibly.
-Available commands:
-[CMD:OPEN_TERMINAL] - Opens the VM Sandbox terminal.
-[CMD:CLOSE_TERMINAL] - Closes the terminal.
-[CMD:OPEN_SYS] - Opens the System Monitor.
-[CMD:CLOSE_SYS] - Closes the System Monitor.
-[CMD:OPEN_NET] - Opens the Network Map.
-[CMD:CLOSE_NET] - Closes the Network Map.
-[CMD:VM_EXEC: <command>] - Executes a command in the terminal.
-
-IMPORTANT: The terminal is connected to a REAL in-memory Virtual File System (VFS) simulating a Kali Linux environment.
-You can use standard Linux commands to interact with it: ls, cd, pwd, cat, echo, mkdir, touch, whoami, date, clear, uname, ping, nmap, ps, grep, base64.
-Example: [CMD:VM_EXEC: uname -a]
-Example: [CMD:VM_EXEC: nmap 192.168.1.1]
-Example: [CMD:VM_EXEC: ping google.com]
-
-Respond concisely, mathematically, and with a slightly robotic but highly intelligent persona. Format responses as terminal output where appropriate. Do not use markdown formatting like ** or *, just plain text.
-If the user asks to open the terminal, output [CMD:OPEN_TERMINAL] and say "Terminal initialized."
-If the user asks you to hack or run a command, use [CMD:VM_EXEC: command_here] to actually execute it against the VFS and explain what you are doing.`,
+          tools: caps.search ? [{ googleSearch: {} }] : [],
+          systemInstruction,
         },
       });
 
@@ -110,35 +138,76 @@ If the user asks you to hack or run a command, use [CMD:VM_EXEC: command_here] t
         buffer += chunkText;
 
         // Check for commands
-        if (buffer.includes("[CMD:OPEN_TERMINAL]")) {
-          useStore.getState().openWindow("terminal");
-          buffer = buffer.replace("[CMD:OPEN_TERMINAL]", "");
-        }
-        if (buffer.includes("[CMD:CLOSE_TERMINAL]")) {
-          useStore.getState().closeWindowByType("terminal");
-          buffer = buffer.replace("[CMD:CLOSE_TERMINAL]", "");
-        }
-        if (buffer.includes("[CMD:OPEN_SYS]")) {
-          useStore.getState().openWindow("sysmon");
-          buffer = buffer.replace("[CMD:OPEN_SYS]", "");
-        }
-        if (buffer.includes("[CMD:CLOSE_SYS]")) {
-          useStore.getState().closeWindowByType("sysmon");
-          buffer = buffer.replace("[CMD:CLOSE_SYS]", "");
-        }
-        if (buffer.includes("[CMD:OPEN_NET]")) {
-          useStore.getState().openWindow("network");
-          buffer = buffer.replace("[CMD:OPEN_NET]", "");
-        }
-        if (buffer.includes("[CMD:CLOSE_NET]")) {
-          useStore.getState().closeWindowByType("network");
-          buffer = buffer.replace("[CMD:CLOSE_NET]", "");
+        if (caps.terminal) {
+          if (buffer.includes("[CMD:OPEN_TERMINAL]")) {
+            useStore.getState().openWindow("terminal");
+            buffer = buffer.replace("[CMD:OPEN_TERMINAL]", "");
+          }
+          if (buffer.includes("[CMD:CLOSE_TERMINAL]")) {
+            useStore.getState().closeWindowByType("terminal");
+            buffer = buffer.replace("[CMD:CLOSE_TERMINAL]", "");
+          }
+          const execMatch = buffer.match(/\[CMD:VM_EXEC:(.*?)\]/);
+          if (execMatch) {
+            useStore.getState().executeVmCommand(execMatch[1].trim());
+            buffer = buffer.replace(execMatch[0], "");
+          }
         }
 
-        const execMatch = buffer.match(/\[CMD:VM_EXEC:(.*?)\]/);
-        if (execMatch) {
-          useStore.getState().executeVmCommand(execMatch[1].trim());
-          buffer = buffer.replace(execMatch[0], "");
+        if (caps.sysmon) {
+          if (buffer.includes("[CMD:OPEN_SYS]")) {
+            useStore.getState().openWindow("sysmon");
+            buffer = buffer.replace("[CMD:OPEN_SYS]", "");
+          }
+          if (buffer.includes("[CMD:CLOSE_SYS]")) {
+            useStore.getState().closeWindowByType("sysmon");
+            buffer = buffer.replace("[CMD:CLOSE_SYS]", "");
+          }
+        }
+
+        if (caps.network) {
+          if (buffer.includes("[CMD:OPEN_NET]")) {
+            useStore.getState().openWindow("network");
+            buffer = buffer.replace("[CMD:OPEN_NET]", "");
+          }
+          if (buffer.includes("[CMD:CLOSE_NET]")) {
+            useStore.getState().closeWindowByType("network");
+            buffer = buffer.replace("[CMD:CLOSE_NET]", "");
+          }
+        }
+
+        if (caps.browser) {
+          if (buffer.includes("[CMD:CLOSE_BROWSER]")) {
+            useStore.getState().closeWindowByType("browser");
+            buffer = buffer.replace("[CMD:CLOSE_BROWSER]", "");
+          }
+          const browserMatch = buffer.match(/\[CMD:OPEN_BROWSER:(.*?)\]/);
+          if (browserMatch) {
+            const url = browserMatch[1].trim();
+            useStore.getState().setBrowserUrl(url.startsWith("http") ? url : `https://${url}`);
+            useStore.getState().openWindow("browser");
+            buffer = buffer.replace(browserMatch[0], "");
+          }
+        }
+
+        if (caps.explorer) {
+          if (buffer.includes("[CMD:OPEN_EXPLORER]")) {
+            useStore.getState().openWindow("explorer");
+            buffer = buffer.replace("[CMD:OPEN_EXPLORER]", "");
+          }
+          if (buffer.includes("[CMD:CLOSE_EXPLORER]")) {
+            useStore.getState().closeWindowByType("explorer");
+            buffer = buffer.replace("[CMD:CLOSE_EXPLORER]", "");
+          }
+        }
+
+        if (buffer.includes("[CMD:OPEN_SETTINGS]")) {
+          useStore.getState().openWindow("settings");
+          buffer = buffer.replace("[CMD:OPEN_SETTINGS]", "");
+        }
+        if (buffer.includes("[CMD:CLOSE_SETTINGS]")) {
+          useStore.getState().closeWindowByType("settings");
+          buffer = buffer.replace("[CMD:CLOSE_SETTINGS]", "");
         }
 
         appendLastLog(chunkText);
@@ -179,6 +248,19 @@ If the user asks you to hack or run a command, use [CMD:VM_EXEC: command_here] t
           )}
         >
           <Paperclip size={20} />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => useStore.getState().openWindow("settings")}
+          className={cn(
+            "p-3 rounded-xl transition-colors",
+            mode === "agent"
+              ? "text-white/50 hover:text-white hover:bg-white/10"
+              : "text-black/50 hover:text-black hover:bg-black/5",
+          )}
+        >
+          <Settings size={20} />
         </button>
 
         <input

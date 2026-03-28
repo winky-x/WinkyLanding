@@ -5,6 +5,7 @@ import WindowFrame from "./WindowFrame";
 import { motion } from "motion/react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { useState } from "react";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -16,6 +17,18 @@ export default function SysmonWindow({
   windowState: WindowState;
 }) {
   const mode = useStore((state) => state.mode);
+
+  const [bars] = useState<any[]>(() =>
+    Array.from({ length: 20 }).map((_, i) => ({
+      id: i,
+      heights: [
+        `${Math.random() * 100}%`,
+        `${Math.random() * 100}%`,
+        `${Math.random() * 100}%`,
+      ],
+      duration: Math.random() * 2 + 1,
+    }))
+  );
 
   return (
     <WindowFrame
@@ -57,23 +70,19 @@ export default function SysmonWindow({
         </div>
         <div className="flex-1 flex items-end">
           <div className="w-full h-16 flex items-end gap-1">
-            {Array.from({ length: 20 }).map((_, i) => (
+            {bars.map((bar) => (
               <motion.div
-                key={i}
+                key={bar.id}
                 className={cn(
                   "flex-1 rounded-t-sm",
                   mode === "agent" ? "bg-green-500/50" : "bg-blue-500/50"
                 )}
                 animate={{
-                  height: [
-                    `${Math.random() * 100}%`,
-                    `${Math.random() * 100}%`,
-                    `${Math.random() * 100}%`,
-                  ],
+                  height: bar.heights,
                 }}
                 transition={{
                   repeat: Infinity,
-                  duration: Math.random() * 2 + 1,
+                  duration: bar.duration,
                   ease: "easeInOut",
                 }}
               />

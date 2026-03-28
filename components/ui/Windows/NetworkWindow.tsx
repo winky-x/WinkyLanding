@@ -5,6 +5,7 @@ import WindowFrame from "./WindowFrame";
 import { motion } from "motion/react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { useState } from "react";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -16,6 +17,22 @@ export default function NetworkWindow({
   windowState: WindowState;
 }) {
   const mode = useStore((state) => state.mode);
+
+  const [nodes] = useState<any[]>(() =>
+    Array.from({ length: 12 }).map((_, i) => {
+      const angle = (i / 12) * Math.PI * 2;
+      const radius = Math.random() * 100 + 50;
+      const x = Math.cos(angle) * radius;
+      const y = Math.sin(angle) * radius;
+      return {
+        id: i,
+        x,
+        y,
+        duration: Math.random() * 2 + 1,
+        delay: Math.random(),
+      };
+    })
+  );
 
   return (
     <WindowFrame
@@ -58,29 +75,23 @@ export default function NetworkWindow({
         />
 
         {/* Nodes */}
-        {Array.from({ length: 12 }).map((_, i) => {
-          const angle = (i / 12) * Math.PI * 2;
-          const radius = Math.random() * 100 + 50;
-          const x = Math.cos(angle) * radius;
-          const y = Math.sin(angle) * radius;
-          return (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: [0.5, 1, 0.5], scale: 1 }}
-              transition={{
-                repeat: Infinity,
-                duration: Math.random() * 2 + 1,
-                delay: Math.random(),
-              }}
-              className={cn(
-                "absolute w-2 h-2 rounded-full shadow-[0_0_10px_currentColor]",
-                mode === "agent" ? "bg-pink-500 text-pink-500" : "bg-blue-500 text-blue-500"
-              )}
-              style={{ x, y }}
-            />
-          );
-        })}
+        {nodes.map((node) => (
+          <motion.div
+            key={node.id}
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: [0.5, 1, 0.5], scale: 1 }}
+            transition={{
+              repeat: Infinity,
+              duration: node.duration,
+              delay: node.delay,
+            }}
+            className={cn(
+              "absolute w-2 h-2 rounded-full shadow-[0_0_10px_currentColor]",
+              mode === "agent" ? "bg-pink-500 text-pink-500" : "bg-blue-500 text-blue-500"
+            )}
+            style={{ x: node.x, y: node.y }}
+          />
+        ))}
 
         <div
           className={cn(

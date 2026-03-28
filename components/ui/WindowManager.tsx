@@ -4,6 +4,9 @@ import { useStore } from "@/store/useStore";
 import TerminalWindow from "./Windows/TerminalWindow";
 import SysmonWindow from "./Windows/SysmonWindow";
 import NetworkWindow from "./Windows/NetworkWindow";
+import BrowserWindow from "./Windows/BrowserWindow";
+import ExplorerWindow from "./Windows/ExplorerWindow";
+import SettingsWindow from "./Windows/SettingsWindow";
 import { AnimatePresence } from "motion/react";
 
 export default function WindowManager() {
@@ -23,6 +26,12 @@ export default function WindowManager() {
                 return <SysmonWindow key={window.id} windowState={window} />;
               case "network":
                 return <NetworkWindow key={window.id} windowState={window} />;
+              case "browser":
+                return <BrowserWindow key={window.id} windowState={window} />;
+              case "explorer":
+                return <ExplorerWindow key={window.id} windowState={window} />;
+              case "settings":
+                return <SettingsWindow key={window.id} windowState={window} />;
               default:
                 return null;
             }
