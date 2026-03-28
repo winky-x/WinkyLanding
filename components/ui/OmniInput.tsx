@@ -22,6 +22,10 @@ export default function OmniInput() {
   const setInputCoordinates = useStore((state) => state.setInputCoordinates);
   const addTerminalLog = useStore((state) => state.addTerminalLog);
 
+  const isProcessing = useStore((state) => state.isProcessing);
+  const setIsProcessing = useStore((state) => state.setIsProcessing);
+  const appendLastLog = useStore((state) => state.appendLastLog);
+
   // Update coordinates for gravitational listening
   useEffect(() => {
     const updateCoords = () => {
@@ -50,14 +54,40 @@ export default function OmniInput() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!text.trim()) return;
+    if (!text.trim() || isProcessing) return;
 
-    addTerminalLog(`> USER_INPUT: "${text}"`);
-    addTerminalLog("> PARSING INTENT...");
-    addTerminalLog("> EXECUTING LOCAL SCRIPT...");
+    const currentText = text;
     setText("");
+    setIsProcessing(true);
+
+    addTerminalLog(`> USER: ${currentText}`);
+    addTerminalLog(`> WINKY: `);
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: currentText }),
+      });
+
+      if (!res.body) throw new Error("No response body");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        appendLastLog(chunk);
+      }
+    } catch (e) {
+      appendLastLog("\n[SYSTEM ERROR: CONNECTION SEVERED]");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -72,29 +102,19 @@ export default function OmniInput() {
         onSubmit={handleSubmit}
         className={cn(
           "relative flex items-center w-full p-2 rounded-2xl transition-all duration-500",
-          mode === "agent" ? "glass-panel" : "glass-panel-light",
-          isListening && (mode === "agent" ? "shadow-[0_0_40px_rgba(255,0,127,0.3)]" : "shadow-[0_0_40px_rgba(255,255,255,0.8)]")
+          "backdrop-blur-xl border",
+          mode === "agent"
+            ? "bg-black/40 border-white/10 shadow-[0_0_30px_rgba(255,0,127,0.1)]"
+            : "bg-white/40 border-black/5 shadow-[0_0_30px_rgba(255,255,255,0.5)]",
         )}
       >
-        {/* Animated Listening Border */}
-        {isListening && (
-          <div className="absolute inset-0 -z-10 rounded-2xl animate-pulse-glow">
-            <div className={cn(
-              "absolute inset-[-2px] rounded-[18px] opacity-50",
-              mode === "agent" 
-                ? "bg-gradient-to-r from-pink-500 via-blue-600 to-pink-500" 
-                : "bg-gradient-to-r from-white via-pink-200 to-white"
-            )} />
-          </div>
-        )}
-
         <button
           type="button"
           className={cn(
-            "p-3 rounded-xl transition-all duration-300",
+            "p-3 rounded-xl transition-colors",
             mode === "agent"
-              ? "text-white/50 hover:text-white hover:bg-white/10 hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]"
-              : "text-black/50 hover:text-black hover:bg-black/5 hover:shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)]",
+              ? "text-white/50 hover:text-white hover:bg-white/10"
+              : "text-black/50 hover:text-black hover:bg-black/5",
           )}
         >
           <Paperclip size={20} />
@@ -107,7 +127,7 @@ export default function OmniInput() {
           onChange={(e) => setText(e.target.value)}
           placeholder="Command Winky..."
           className={cn(
-            "flex-1 bg-transparent border-none outline-none px-4 text-lg font-mono tracking-wide",
+            "flex-1 bg-transparent border-none outline-none px-4 text-lg font-mono",
             mode === "agent"
               ? "text-white placeholder:text-white/30"
               : "text-black placeholder:text-black/30",
@@ -121,11 +141,11 @@ export default function OmniInput() {
             "p-3 rounded-xl transition-all duration-300 mr-2",
             isListening
               ? mode === "agent"
-                ? "bg-pink-500/20 text-pink-500 shadow-[inset_0_0_0_1px_rgba(255,0,127,0.5)]"
-                : "bg-pink-500/10 text-pink-600 shadow-[inset_0_0_0_1px_rgba(255,113,118,0.5)]"
+                ? "bg-pink-500/20 text-pink-500 shadow-[0_0_15px_rgba(255,0,127,0.5)]"
+                : "bg-pink-500/20 text-pink-600 shadow-[0_0_15px_rgba(255,113,118,0.5)]"
               : mode === "agent"
-                ? "text-white/50 hover:text-white hover:bg-white/10 hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]"
-                : "text-black/50 hover:text-black hover:bg-black/5 hover:shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)]",
+                ? "text-white/50 hover:text-white hover:bg-white/10"
+                : "text-black/50 hover:text-black hover:bg-black/5",
           )}
         >
           <Mic size={20} className={cn(isListening && "animate-pulse")} />
@@ -133,15 +153,15 @@ export default function OmniInput() {
 
         <button
           type="submit"
-          disabled={!text.trim()}
+          disabled={!text.trim() || isProcessing}
           className={cn(
             "p-3 rounded-xl transition-all duration-300",
-            text.trim()
+            text.trim() && !isProcessing
               ? mode === "agent"
-                ? "bg-white text-black hover:scale-105 shadow-[0_0_20px_rgba(255,255,255,0.3)]"
-                : "bg-black text-white hover:scale-105 shadow-[0_0_20px_rgba(0,0,0,0.3)]"
+                ? "bg-white text-black hover:scale-105"
+                : "bg-black text-white hover:scale-105"
               : mode === "agent"
-                ? "bg-white/5 text-white/30"
+                ? "bg-white/10 text-white/30"
                 : "bg-black/5 text-black/30",
           )}
         >
