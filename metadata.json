@@ -1,0 +1,5 @@
+{
+  "name": "Winky Core",
+  "description": "Spatial computing landing experience for Winky, an autonomous Web Agent.",
+  "requestFramePermissions": ["microphone"]
+}
