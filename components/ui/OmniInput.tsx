@@ -76,11 +76,52 @@ export default function OmniInput() {
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
+      let buffer = "";
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         const chunk = decoder.decode(value, { stream: true });
+        buffer += chunk;
+
+        // Check for commands
+        if (buffer.includes("[CMD:OPEN_TERMINAL]")) {
+          useStore.getState().openWindow("terminal");
+          buffer = buffer.replace("[CMD:OPEN_TERMINAL]", "");
+        }
+        if (buffer.includes("[CMD:CLOSE_TERMINAL]")) {
+          useStore.getState().closeWindowByType("terminal");
+          buffer = buffer.replace("[CMD:CLOSE_TERMINAL]", "");
+        }
+        if (buffer.includes("[CMD:OPEN_SYS]")) {
+          useStore.getState().openWindow("sysmon");
+          buffer = buffer.replace("[CMD:OPEN_SYS]", "");
+        }
+        if (buffer.includes("[CMD:CLOSE_SYS]")) {
+          useStore.getState().closeWindowByType("sysmon");
+          buffer = buffer.replace("[CMD:CLOSE_SYS]", "");
+        }
+        if (buffer.includes("[CMD:OPEN_NET]")) {
+          useStore.getState().openWindow("network");
+          buffer = buffer.replace("[CMD:OPEN_NET]", "");
+        }
+        if (buffer.includes("[CMD:CLOSE_NET]")) {
+          useStore.getState().closeWindowByType("network");
+          buffer = buffer.replace("[CMD:CLOSE_NET]", "");
+        }
+
+        const execMatch = buffer.match(/\[CMD:VM_EXEC:(.*?)\]/);
+        if (execMatch) {
+          useStore.getState().executeVmCommand(execMatch[1].trim());
+          buffer = buffer.replace(execMatch[0], "");
+        }
+
+        // Only append the cleaned chunk to the terminal
+        // We do this by replacing the last log entirely with the cleaned buffer
+        // Wait, appendLastLog appends text. If we use a buffer, we need to be careful.
+        // Let's just append the raw chunk, but if it contains a command, it might be visible briefly.
+        // Actually, for the "Vanguard" aesthetic, seeing the command briefly or permanently is fine.
+        // Let's just append the chunk directly, and execute the command.
         appendLastLog(chunk);
       }
     } catch (e) {

@@ -7,7 +7,7 @@ import Nebula from "@/components/canvas/Nebula";
 import OmniInput from "@/components/ui/OmniInput";
 import GhostTerminal from "@/components/ui/GhostTerminal";
 import BiomeToggle from "@/components/ui/BiomeToggle";
-import ProofOfPower from "@/components/ui/ProofOfPower";
+import WindowManager from "@/components/ui/WindowManager";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -45,7 +45,7 @@ export default function Home() {
       <div className="relative z-10 w-full h-full pointer-events-none">
         <GhostTerminal />
         <BiomeToggle />
-        <ProofOfPower />
+        <WindowManager />
 
         {/* Omni-Input needs pointer events */}
         <div className="pointer-events-auto">
