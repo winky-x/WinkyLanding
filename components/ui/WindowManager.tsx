@@ -13,7 +13,7 @@ export default function WindowManager() {
   const windows = useStore((state) => state.windows);
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-30">
+    <div className="fixed inset-0 pointer-events-none z-40">
       <div className="w-full h-full relative pointer-events-auto">
         <AnimatePresence>
           {windows.map((window) => {

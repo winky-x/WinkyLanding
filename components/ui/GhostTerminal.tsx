@@ -27,7 +27,7 @@ export default function GhostTerminal() {
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 1, delay: 0.5 }}
       className={cn(
-        "fixed top-12 left-12 w-[500px] h-[600px] z-40 p-6 rounded-2xl overflow-hidden pointer-events-none",
+        "fixed top-12 left-12 w-[500px] h-[600px] z-20 p-6 rounded-2xl overflow-hidden pointer-events-none",
         "backdrop-blur-md border",
         mode === "agent"
           ? "bg-black/20 border-white/5 shadow-[inset_0_0_50px_rgba(0,0,0,0.8)]"
