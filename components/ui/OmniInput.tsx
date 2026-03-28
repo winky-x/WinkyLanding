@@ -6,6 +6,7 @@ import { Mic, Send, Paperclip } from "lucide-react";
 import { motion } from "motion/react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { GoogleGenAI } from "@google/genai";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -66,23 +67,47 @@ export default function OmniInput() {
     addTerminalLog(`> WINKY: `);
 
     try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: currentText }),
+      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+      if (!apiKey) {
+        throw new Error("API Key not found");
+      }
+
+      const ai = new GoogleGenAI({ apiKey });
+
+      const responseStream = await ai.models.generateContentStream({
+        model: "gemini-3.1-flash-lite-preview",
+        contents: currentText,
+        config: {
+          systemInstruction: `You are Winky, a sentient, highly advanced spatial computing Web Agent.
+You control the user's Web OS.
+To perform actions, you MUST output specific command tags in your text response. The system will parse and execute them invisibly.
+Available commands:
+[CMD:OPEN_TERMINAL] - Opens the VM Sandbox terminal.
+[CMD:CLOSE_TERMINAL] - Closes the terminal.
+[CMD:OPEN_SYS] - Opens the System Monitor.
+[CMD:CLOSE_SYS] - Closes the System Monitor.
+[CMD:OPEN_NET] - Opens the Network Map.
+[CMD:CLOSE_NET] - Closes the Network Map.
+[CMD:VM_EXEC: <command>] - Executes a command in the terminal.
+
+IMPORTANT: The terminal is connected to a REAL in-memory Virtual File System (VFS) simulating a Kali Linux environment.
+You can use standard Linux commands to interact with it: ls, cd, pwd, cat, echo, mkdir, touch, whoami, date, clear, uname, ping, nmap, ps, grep, base64.
+Example: [CMD:VM_EXEC: uname -a]
+Example: [CMD:VM_EXEC: nmap 192.168.1.1]
+Example: [CMD:VM_EXEC: ping google.com]
+
+Respond concisely, mathematically, and with a slightly robotic but highly intelligent persona. Format responses as terminal output where appropriate. Do not use markdown formatting like ** or *, just plain text.
+If the user asks to open the terminal, output [CMD:OPEN_TERMINAL] and say "Terminal initialized."
+If the user asks you to hack or run a command, use [CMD:VM_EXEC: command_here] to actually execute it against the VFS and explain what you are doing.`,
+        },
       });
 
-      if (!res.body) throw new Error("No response body");
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
       let buffer = "";
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        buffer += chunk;
+      for await (const chunk of responseStream) {
+        if (!chunk.text) continue;
+        const chunkText = chunk.text;
+        buffer += chunkText;
 
         // Check for commands
         if (buffer.includes("[CMD:OPEN_TERMINAL]")) {
@@ -116,16 +141,11 @@ export default function OmniInput() {
           buffer = buffer.replace(execMatch[0], "");
         }
 
-        // Only append the cleaned chunk to the terminal
-        // We do this by replacing the last log entirely with the cleaned buffer
-        // Wait, appendLastLog appends text. If we use a buffer, we need to be careful.
-        // Let's just append the raw chunk, but if it contains a command, it might be visible briefly.
-        // Actually, for the "Vanguard" aesthetic, seeing the command briefly or permanently is fine.
-        // Let's just append the chunk directly, and execute the command.
-        appendLastLog(chunk);
+        appendLastLog(chunkText);
       }
-    } catch (e) {
-      appendLastLog("\n[SYSTEM ERROR: CONNECTION SEVERED]");
+    } catch (e: any) {
+      console.error("Chat API Error:", e);
+      appendLastLog(`\n[SYSTEM ERROR: ${e.message || "CONNECTION SEVERED"}]`);
     } finally {
       setIsProcessing(false);
     }
