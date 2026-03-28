@@ -86,14 +86,50 @@ export default function ProofOfPower() {
           </div>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 p-4 overflow-hidden relative">
+        <div className="flex-1 flex overflow-hidden relative">
+          {/* Telemetry Sidebar */}
+          <div className={cn(
+            "w-24 border-r flex flex-col items-center py-4 gap-4 text-[9px] font-mono",
+            mode === "agent" ? "border-white/10 text-white/40" : "border-black/10 text-black/40"
+          )}>
+            <div className="flex flex-col items-center gap-1">
+              <span>CPU</span>
+              <div className="w-8 h-1 bg-white/10 rounded-full overflow-hidden">
+                <motion.div 
+                  animate={{ width: ["30%", "80%", "40%", "90%", "50%"] }} 
+                  transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+                  className={cn("h-full", mode === "agent" ? "bg-pink-500" : "bg-blue-500")} 
+                />
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <span>MEM</span>
+              <div className="w-8 h-1 bg-white/10 rounded-full overflow-hidden">
+                <motion.div 
+                  animate={{ width: ["60%", "65%", "62%", "70%", "60%"] }} 
+                  transition={{ repeat: Infinity, duration: 3, ease: "linear" }}
+                  className={cn("h-full", mode === "agent" ? "bg-blue-500" : "bg-pink-500")} 
+                />
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <span>NET</span>
+              <div className="w-8 h-1 bg-white/10 rounded-full overflow-hidden">
+                <motion.div 
+                  animate={{ width: ["10%", "100%", "5%", "40%", "10%"] }} 
+                  transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+                  className={cn("h-full", mode === "agent" ? "bg-green-400" : "bg-green-500")} 
+                />
+              </div>
+            </div>
+          </div>
+
           <div
             className={cn(
-              "h-full w-full rounded-lg p-4 font-mono text-sm overflow-y-auto",
+              "flex-1 p-4 font-mono text-xs overflow-y-auto",
               mode === "agent"
-                ? "bg-black/80 text-green-400"
-                : "bg-white/80 text-blue-600",
+                ? "bg-black/40 text-green-400"
+                : "bg-white/40 text-blue-600",
             )}
           >
             <div className="opacity-70 mb-4">

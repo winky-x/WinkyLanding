@@ -72,19 +72,29 @@ export default function OmniInput() {
         onSubmit={handleSubmit}
         className={cn(
           "relative flex items-center w-full p-2 rounded-2xl transition-all duration-500",
-          "backdrop-blur-xl border",
-          mode === "agent"
-            ? "bg-black/40 border-white/10 shadow-[0_0_30px_rgba(255,0,127,0.1)]"
-            : "bg-white/40 border-black/5 shadow-[0_0_30px_rgba(255,255,255,0.5)]",
+          mode === "agent" ? "glass-panel" : "glass-panel-light",
+          isListening && (mode === "agent" ? "shadow-[0_0_40px_rgba(255,0,127,0.3)]" : "shadow-[0_0_40px_rgba(255,255,255,0.8)]")
         )}
       >
+        {/* Animated Listening Border */}
+        {isListening && (
+          <div className="absolute inset-0 -z-10 rounded-2xl animate-pulse-glow">
+            <div className={cn(
+              "absolute inset-[-2px] rounded-[18px] opacity-50",
+              mode === "agent" 
+                ? "bg-gradient-to-r from-pink-500 via-blue-600 to-pink-500" 
+                : "bg-gradient-to-r from-white via-pink-200 to-white"
+            )} />
+          </div>
+        )}
+
         <button
           type="button"
           className={cn(
-            "p-3 rounded-xl transition-colors",
+            "p-3 rounded-xl transition-all duration-300",
             mode === "agent"
-              ? "text-white/50 hover:text-white hover:bg-white/10"
-              : "text-black/50 hover:text-black hover:bg-black/5",
+              ? "text-white/50 hover:text-white hover:bg-white/10 hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]"
+              : "text-black/50 hover:text-black hover:bg-black/5 hover:shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)]",
           )}
         >
           <Paperclip size={20} />
@@ -97,7 +107,7 @@ export default function OmniInput() {
           onChange={(e) => setText(e.target.value)}
           placeholder="Command Winky..."
           className={cn(
-            "flex-1 bg-transparent border-none outline-none px-4 text-lg font-mono",
+            "flex-1 bg-transparent border-none outline-none px-4 text-lg font-mono tracking-wide",
             mode === "agent"
               ? "text-white placeholder:text-white/30"
               : "text-black placeholder:text-black/30",
@@ -111,11 +121,11 @@ export default function OmniInput() {
             "p-3 rounded-xl transition-all duration-300 mr-2",
             isListening
               ? mode === "agent"
-                ? "bg-pink-500/20 text-pink-500 shadow-[0_0_15px_rgba(255,0,127,0.5)]"
-                : "bg-pink-500/20 text-pink-600 shadow-[0_0_15px_rgba(255,113,118,0.5)]"
+                ? "bg-pink-500/20 text-pink-500 shadow-[inset_0_0_0_1px_rgba(255,0,127,0.5)]"
+                : "bg-pink-500/10 text-pink-600 shadow-[inset_0_0_0_1px_rgba(255,113,118,0.5)]"
               : mode === "agent"
-                ? "text-white/50 hover:text-white hover:bg-white/10"
-                : "text-black/50 hover:text-black hover:bg-black/5",
+                ? "text-white/50 hover:text-white hover:bg-white/10 hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]"
+                : "text-black/50 hover:text-black hover:bg-black/5 hover:shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)]",
           )}
         >
           <Mic size={20} className={cn(isListening && "animate-pulse")} />
@@ -128,10 +138,10 @@ export default function OmniInput() {
             "p-3 rounded-xl transition-all duration-300",
             text.trim()
               ? mode === "agent"
-                ? "bg-white text-black hover:scale-105"
-                : "bg-black text-white hover:scale-105"
+                ? "bg-white text-black hover:scale-105 shadow-[0_0_20px_rgba(255,255,255,0.3)]"
+                : "bg-black text-white hover:scale-105 shadow-[0_0_20px_rgba(0,0,0,0.3)]"
               : mode === "agent"
-                ? "bg-white/10 text-white/30"
+                ? "bg-white/5 text-white/30"
                 : "bg-black/5 text-black/30",
           )}
         >

@@ -15,20 +15,20 @@ const generateParticles = () => {
   for (let i = 0; i < PARTICLE_COUNT; i++) {
     const i3 = i * 3;
 
-    // Spherical distribution
-    const radius = Math.random() * 8;
+    // Torus/Galaxy distribution for a more organic shape
+    const radius = Math.random() * 12 + 2;
     const theta = Math.random() * 2 * Math.PI;
-    const phi = Math.acos(Math.random() * 2 - 1);
+    const phi = (Math.random() - 0.5) * 2.0;
 
-    positions[i3] = radius * Math.sin(phi) * Math.cos(theta);
-    positions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-    positions[i3 + 2] = radius * Math.cos(phi);
+    positions[i3] = radius * Math.cos(theta) + (Math.random() - 0.5) * 4;
+    positions[i3 + 1] = radius * Math.sin(theta) + (Math.random() - 0.5) * 4;
+    positions[i3 + 2] = phi * 4.0 + (Math.random() - 0.5) * 4;
 
-    randomness[i3] = (Math.random() - 0.5) * 2;
-    randomness[i3 + 1] = (Math.random() - 0.5) * 2;
-    randomness[i3 + 2] = (Math.random() - 0.5) * 2;
+    randomness[i3] = (Math.random() - 0.5) * 3;
+    randomness[i3 + 1] = (Math.random() - 0.5) * 3;
+    randomness[i3 + 2] = (Math.random() - 0.5) * 3;
 
-    sizes[i] = Math.random() * 30 + 10;
+    sizes[i] = Math.random() * 40 + 5;
   }
 
   return { positions, randomness, sizes };
@@ -52,21 +52,31 @@ const vertexShader = `
   void main() {
     vec3 pos = position;
     
-    // Volumetric breathing
-    float noise = sin(pos.x * 0.5 + uTime * 0.5) * cos(pos.y * 0.5 + uTime * 0.5) * sin(pos.z * 0.5);
-    pos += aRandomness * noise * 2.0;
+    // Complex Volumetric breathing (Multi-octave sine wave)
+    float noise1 = sin(pos.x * 0.3 + uTime * 0.4) * cos(pos.y * 0.3 + uTime * 0.4) * sin(pos.z * 0.3);
+    float noise2 = sin(pos.y * 0.6 - uTime * 0.2) * cos(pos.z * 0.6 - uTime * 0.2);
+    
+    pos += aRandomness * (noise1 + noise2) * 2.5;
 
-    // Cursor Interaction
+    // Orbital rotation
+    float angle = uTime * 0.05;
+    mat2 rot = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
+    pos.xy *= rot;
+
+    // Cursor Interaction (Magnetic Repulsion/Attraction)
     vec3 dirToCursor = uPointer - pos;
     float distToCursor = length(dirToCursor);
-    float cursorInfluence = smoothstep(5.0, 0.0, distToCursor);
-    pos += dirToCursor * cursorInfluence * 0.1;
+    float cursorInfluence = smoothstep(8.0, 0.0, distToCursor);
+    pos += dirToCursor * cursorInfluence * 0.15;
 
-    // Gravitational Listening
+    // Gravitational Listening (FFT Simulation)
     vec3 dirToInput = uInputCoords - pos;
     float distToInput = length(dirToInput);
-    float inputInfluence = smoothstep(8.0, 0.0, distToInput);
-    pos += dirToInput * inputInfluence * uIsListening * 0.3 * (sin(uTime * 15.0) * 0.5 + 0.5);
+    float inputInfluence = smoothstep(12.0, 0.0, distToInput);
+    
+    // Create a "pulling" effect towards the input
+    float pullStrength = uIsListening * 0.4 * (sin(distToInput * 2.0 - uTime * 10.0) * 0.5 + 0.5);
+    pos += dirToInput * inputInfluence * pullStrength;
 
     vec4 modelPosition = modelMatrix * vec4(pos, 1.0);
     vec4 viewPosition = viewMatrix * modelPosition;
@@ -78,16 +88,27 @@ const vertexShader = `
     // Colors
     vec3 agentColor1 = vec3(1.0, 0.0, 0.498); // #FF007F
     vec3 agentColor2 = vec3(0.0, 0.0, 0.545); // #00008B
+    vec3 agentColor3 = vec3(0.5, 0.0, 1.0);   // Deep Purple
+    
     vec3 assistantColor1 = vec3(1.0, 1.0, 1.0);
     vec3 assistantColor2 = vec3(1.0, 0.71, 0.76);
+    vec3 assistantColor3 = vec3(0.8, 0.9, 1.0);
 
     vec3 color1 = mix(agentColor1, assistantColor1, uMode);
     vec3 color2 = mix(agentColor2, assistantColor2, uMode);
+    vec3 color3 = mix(agentColor3, assistantColor3, uMode);
 
-    float mixRatio = (sin(pos.x * 0.5 + uTime) + 1.0) * 0.5;
-    vColor = mix(color1, color2, mixRatio);
+    float mixRatio1 = (sin(pos.x * 0.2 + uTime * 0.5) + 1.0) * 0.5;
+    float mixRatio2 = (cos(pos.y * 0.2 - uTime * 0.3) + 1.0) * 0.5;
     
-    vAlpha = smoothstep(15.0, 0.0, length(pos)) * 0.6;
+    vec3 finalColor = mix(color1, color2, mixRatio1);
+    finalColor = mix(finalColor, color3, mixRatio2);
+    
+    vColor = finalColor;
+    
+    // Dynamic Alpha
+    vAlpha = smoothstep(20.0, 0.0, length(pos.xy)) * 0.7;
+    vAlpha *= (sin(uTime * 2.0 + aRandomness.x * 10.0) * 0.5 + 0.5) * 0.5 + 0.5; // Twinkle
   }
 `;
 

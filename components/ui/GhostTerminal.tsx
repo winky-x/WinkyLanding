@@ -27,20 +27,35 @@ export default function GhostTerminal() {
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 1, delay: 0.5 }}
       className={cn(
-        "fixed top-12 left-12 w-96 h-96 z-40 p-6 rounded-2xl overflow-hidden pointer-events-none",
-        "backdrop-blur-md border",
-        mode === "agent"
-          ? "bg-black/20 border-white/5 shadow-[inset_0_0_50px_rgba(0,0,0,0.8)]"
-          : "bg-white/20 border-black/5 shadow-[inset_0_0_50px_rgba(255,255,255,0.5)]",
+        "fixed top-12 left-12 w-96 h-[400px] z-40 p-6 rounded-none overflow-hidden pointer-events-none",
+        mode === "agent" ? "glass-panel" : "glass-panel-light",
       )}
     >
+      {/* HUD Corners */}
+      <div className={cn(mode === "agent" ? "hud-corner" : "hud-corner-light", "top-0 left-0 border-t border-l")} />
+      <div className={cn(mode === "agent" ? "hud-corner" : "hud-corner-light", "top-0 right-0 border-t border-r")} />
+      <div className={cn(mode === "agent" ? "hud-corner" : "hud-corner-light", "bottom-0 left-0 border-b border-l")} />
+      <div className={cn(mode === "agent" ? "hud-corner" : "hud-corner-light", "bottom-0 right-0 border-b border-r")} />
+
+      {/* HUD Header */}
+      <div className={cn(
+        "absolute top-0 left-0 w-full px-4 py-1 text-[9px] font-mono tracking-[0.2em] flex justify-between items-center border-b",
+        mode === "agent" ? "text-white/40 border-white/10" : "text-black/40 border-black/10"
+      )}>
+        <span>SYS.LOG // 0x00F</span>
+        <span className="flex items-center gap-2">
+          REC <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+        </span>
+      </div>
+
       {/* CRT Scanline Effect */}
       <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%] z-10 opacity-50 mix-blend-overlay"></div>
+      <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent via-white/5 to-transparent h-[10%] w-full animate-scanline z-10 opacity-30"></div>
 
       <div
         ref={scrollRef}
         className={cn(
-          "relative z-20 h-full overflow-y-auto font-mono text-xs leading-relaxed tracking-widest",
+          "relative z-20 h-full mt-4 overflow-y-auto font-mono text-[11px] leading-relaxed tracking-widest",
           mode === "agent"
             ? "text-green-400 drop-shadow-[0_0_5px_rgba(74,222,128,0.8)]"
             : "text-blue-600 drop-shadow-[0_0_5px_rgba(37,99,235,0.5)]",

@@ -25,6 +25,9 @@ export default function Home() {
         mode === "agent" ? "bg-[#050505]" : "bg-[#f8f9fa]",
       )}
     >
+      {/* Film Grain Overlay */}
+      <div className="pointer-events-none absolute inset-0 z-50 opacity-[0.03] mix-blend-overlay bg-noise"></div>
+
       {/* 3D Canvas Layer */}
       <div className="absolute inset-0 z-0">
         <Canvas
