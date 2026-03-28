@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     const ai = new GoogleGenAI({ apiKey: apiKey as string });
 
     const responseStream = await ai.models.generateContentStream({
-      model: "gemini-3.1-flash-preview",
+      model: "gemini-3.1-flash-lite-preview",
       contents: message,
       config: {
         systemInstruction:
