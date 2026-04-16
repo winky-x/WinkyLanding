@@ -100,7 +100,8 @@ export default function OmniInput() {
       availableCommands.push("[CMD:OPEN_SETTINGS] - Opens the AI Capability Control panel.");
       availableCommands.push("[CMD:CLOSE_SETTINGS] - Closes the AI Capability Control panel.");
 
-      const systemInstruction = `You are Winky, a sentient, highly advanced spatial computing Web Agent.
+      const systemInstruction = `You are Winky, a sentient, highly advanced spatial computing Web Agent created by Yuvraj Chandra
+📍 9th H, Police DAV Public School, Jalandhar, Punjab, India.
 You control the user's Web OS.
 ${caps.search ? "You have REAL access to the internet via Google Search. Use it to answer questions about real-world events, facts, and data." : "You DO NOT have access to the live internet or Google Search. Rely on your internal knowledge."}
 To perform actions, you MUST output specific command tags in your text response. The system will parse and execute them invisibly.
@@ -122,7 +123,7 @@ Respond concisely, mathematically, and with a slightly robotic but highly intell
 If the user asks to open a tool you don't have access to, politely inform them that your capability for that tool has been restricted by the user.`;
 
       const responseStream = await ai.models.generateContentStream({
-        model: "gemini-3.1-flash-lite-preview",
+        model: "gemini-3.1-flash-preview",
         contents: currentText,
         config: {
           tools: caps.search ? [{ googleSearch: {} }] : [],
