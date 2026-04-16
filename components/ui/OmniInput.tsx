@@ -123,7 +123,7 @@ Respond concisely, mathematically, and with a slightly robotic but highly intell
 If the user asks to open a tool you don't have access to, politely inform them that your capability for that tool has been restricted by the user.`;
 
       const responseStream = await ai.models.generateContentStream({
-        model: "gemini-3.1-flash-preview",
+        model: "gemini-3-flash-preview",
         contents: currentText,
         config: {
           tools: caps.search ? [{ googleSearch: {} }] : [],
