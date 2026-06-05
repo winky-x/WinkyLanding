@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Railroad.ai</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --background: 213 45% 67%;
+  --foreground: 0 0% 100%;
+  --heading: 205 52% 5%;
+  --description: 180 9% 33%;
+  --primary: 0 0% 100%;
+  --primary-foreground: 0 0% 0%;
+  --radius: 9999px;
+}
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', system-ui, sans-serif;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.font-heading {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+}
+
+.font-body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+}
+
+/* Hero wrapper */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Background video */
+.bg-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+.bg-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.05);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Liquid glass */
+.liquid-glass {
+  background: rgba(255, 255, 255, 0.01);
+  background-blend-mode: luminosity;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: none;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.liquid-glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.4px;
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.45) 0%,
+    rgba(255, 255, 255, 0.15) 20%,
+    rgba(255, 255, 255, 0) 40%,
+    rgba(255, 255, 255, 0) 60%,
+    rgba(255, 255, 255, 0.15) 80%,
+    rgba(255, 255, 255, 0.45) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Navbar */
+.navbar {
+  position: fixed;
+  top: 30px;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 50;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .navbar {
+    padding-left: 4rem;
+    padding-right: 4rem;
+  }
+}
+
+.logo {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  color: #ffffff;
+  letter-spacing: -0.025em;
+  font-weight: 500;
+}
+
+.nav-pill {
+  display: none;
+  align-items: center;
+  gap: 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 9999px;
+}
+
+@media (min-width: 768px) {
+  .nav-pill {
+    display: flex;
+  }
+}
+
+.nav-pill a {
+  position: relative;
+  z-index: 2;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.nav-pill a:hover {
+  color: #ffffff;
+}
+
+.cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border: none;
+  border-radius: 9999px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.cta-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.cta-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Hero content */
+.hero-content {
+  position: relative;
+  z-index: 10;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 6rem;
+  padding-bottom: 200px;
+  min-height: 100vh;
+}
+
+/* Badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.10);
+  border-radius: 9999px;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 1.75rem;
+}
+
+.badge span {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 400;
+}
+
+/* Heading */
+.heading {
+  font-size: 3.75rem;
+  line-height: 0.85;
+  letter-spacing: -4px;
+  color: hsl(var(--heading));
+  font-weight: 500;
+  max-width: 48rem;
+  margin: 0 auto 1.75rem;
+}
+
+@media (min-width: 768px) {
+  .heading {
+    font-size: 4.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .heading {
+    font-size: 5.5rem;
+  }
+}
+
+.heading .word {
+  display: inline-block;
+  margin-right: 0.25em;
+  filter: blur(10px);
+  opacity: 0;
+  transform: translateY(50px);
+}
+
+.heading .word.animate {
+  filter: blur(0px);
+  opacity: 1;
+  transform: translateY(0);
+  transition: filter 0.35s ease, opacity 0.35s ease, transform 0.35s ease;
+}
+
+/* Subheading */
+.subheading {
+  font-size: calc(1rem + 3px);
+  color: hsl(var(--description));
+  max-width: 42rem;
+  line-height: 1.25;
+  letter-spacing: -0.05em;
+  margin: 0 auto 2rem;
+  filter: blur(10px);
+  opacity: 0;
+  transform: translateY(20px);
+  transition: filter 0.6s ease, opacity 0.6s ease, transform 0.6s ease;
+}
+
+@media (min-width: 768px) {
+  .subheading {
+    font-size: calc(1.125rem + 3px);
+  }
+}
+
+.subheading.animate {
+  filter: blur(0px);
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Email pill */
+.email-form {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  backdrop-filter: blur(100px);
+  -webkit-backdrop-filter: blur(100px);
+  background: rgba(0, 0, 0, 0.25);
+  padding: 0.375rem;
+  padding-left: 1.5rem;
+  filter: blur(10px);
+  opacity: 0;
+  transform: translateY(20px);
+  transition: filter 0.6s ease, opacity 0.6s ease, transform 0.6s ease;
+  width: 100%;
+  max-width: 26rem;
+}
+
+.email-form.animate {
+  filter: blur(0px);
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.email-form input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-family: inherit;
+  padding: 0.5rem 0.75rem 0.5rem 0;
+}
+
+.email-form input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.join-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border: none;
+  border-radius: 9999px;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.2s, opacity 0.2s;
+  white-space: nowrap;
+}
+
+.join-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.join-btn svg {
+  width: 16px;
+  height: 16px;
+}
+</style>
+</head>
+<body>
+<div class="hero">
+  <video class="bg-video" autoplay loop muted playsinline preload="auto" poster="">
+    <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260317_100335_dc625816-c3c1-4b00-b93e-4cb301cf5ea5.mp4" type="video/mp4">
+  </video>
+  <div class="bg-overlay"></div>
+
+  <nav class="navbar">
+    <div class="logo font-heading">Railroad.ai</div>
+    <div class="nav-pill liquid-glass">
+      <a href="#home">Home</a>
+      <a href="#voyages">Voyages</a>
+      <a href="#worlds">Worlds</a>
+      <a href="#innovation">Innovation</a>
+    </div>
+    <a href="#get-started" class="cta-btn">
+      Get Started
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
+    </a>
+  </nav>
+
+  <div class="hero-content">
+    <div class="badge liquid-glass">
+      <span class="font-body">10K+ already subscribed</span>
+    </div>
+
+    <h1 class="heading font-heading" id="heroHeading"></h1>
+
+    <p class="subheading" id="heroSubheading">Cut through the noise of notifications, endless feeds, and constant interruptions. Learn how to reclaim your attention and do meaningful work that truly matters.</p>
+
+    <form class="email-form liquid-glass" id="emailForm" onsubmit="event.preventDefault();">
+      <input type="email" placeholder="Enter your email" aria-label="Enter your email">
+      <button type="submit" class="join-btn">
+        Join Waitlist
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
+      </button>
+    </form>
+  </div>
+</div>
+
+<script>
+(function () {
+  var headingText = 'Focus in a Constantly Distracted World';
+  var headingEl = document.getElementById('heroHeading');
+  var words = headingText.split(' ');
+  var html = '';
+  for (var i = 0; i < words.length; i++) {
+    html += '<span class="word" data-i="' + i + '">' + words[i] + '</span>';
+  }
+  headingEl.innerHTML = html;
+
+  var wordEls = headingEl.querySelectorAll('.word');
+  for (var j = 0; j < wordEls.length; j++) {
+    (function (el, index) {
+      setTimeout(function () {
+        el.classList.add('animate');
+      }, index * 100);
+    })(wordEls[j], j);
+  }
+
+  var totalHeadingMs = wordEls.length * 100;
+
+  setTimeout(function () {
+    var sub = document.getElementById('heroSubheading');
+    if (sub) sub.classList.add('animate');
+  }, 800);
+
+  setTimeout(function () {
+    var form = document.getElementById('emailForm');
+    if (form) form.classList.add('animate');
+  }, 1100);
+})();
+</script>
+</body>
+</html>

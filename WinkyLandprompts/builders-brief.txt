@@ -1,10 +1,37 @@
+Role: Lead UI/UX Designer & Senior Frontend Engineer (React, Tailwind CSS, TypeScript, shadcn/ui)
+Task: Build a complete, highly-interactive, premium landing page for "WinkyTalk" using the exact design specifications, custom components, layout structure, and typography described below.
+
+---
+
+### 1. BRAND IDENTITY & THEME
+- Brand Name: WinkyTalk
+- Core Product: A hands-free, multimodal AI companion that speaks, listens, sees via computer vision, and can operate physical hardware directly from the browser interface.
+- Theme/Style: Modern, premium light theme, vibrant and playful yet sophisticated. Soft, beautiful background luminescence with subtle glow accents (blues/pinks).
+
+---
+
+### 2. TYPOGRAPHY & DESIGN SPECS
+Please configure and strictly enforce the following typography settings:
+- Fonts: "Inter" for headings and clean sans-serif as the primary fallback.
+- Font Sizes:
+  - h1 / Hero Headline: 60px (highly-fluid, tracking-tight, letter-spacing: -4px)
+  - Body Text: 16px (line-height: 1.6, color: hsl(215, 15%, 35%))
+- Header Font: "Inter" (font-weight: 500 / 600)
+- Global Background: A slow-moving, looping CSS animation with subtle white stars drifting smoothly from left to right, overlaid on top of a soft, beautiful background luminescence.
+
+---
+
+### 3. CUSTOM COMPONENTS (TO BE INTEGRATED)
+You must implement and use the following React components in the UI. Make sure to support the shadcn structure (`/components/ui/` or root imports via `@/lib/utils` and `class-variance-authority`). Use Lucide-react for any icons.
+
+#### File: components/ui/liquid-glass-button.tsx
+```tsx
 "use client"
 
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
-
-import { cn } from "@/src/lib/utils"
+import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
   "inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
@@ -112,11 +139,15 @@ function LiquidButton({
         )}
         {...props}
       >
-        <div className="absolute top-0 left-0 z-0 h-full w-full rounded-full shadow-[0_0_6px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.08),inset_3px_3px_0.5px_-3px_rgba(0,0,0,0.9),inset_-3px_-3px_0.5px_-3px_rgba(0,0,0,0.85),inset_1px_1px_1px_-0.5px_rgba(0,0,0,0.6),inset_-1px_-1px_1px_-0.5px_rgba(0,0,0,0.6),inset_0_0_6px_6px_rgba(0,0,0,0.12),inset_0_0_2px_2px_rgba(0,0,0,0.06),0_0_12px_rgba(255,255,255,0.15)] transition-all dark:shadow-[0_0_8px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.08),inset_3px_3px_0.5px_-3.5px_rgba(255,255,255,0.09),inset_-3px_-3px_0.5px_-3.5px_rgba(255,255,255,0.85),inset_1px_1px_1px_-0.5px_rgba(255,255,255,0.6),inset_-1px_-1px_1px_-0.5px_rgba(255,255,255,0.6),inset_0_0_6px_6px_rgba(255,255,255,0.12),inset_0_0_2px_2px_rgba(255,255,255,0.06),0_0_12px_rgba(0,0,0,0.15)]" />
+        <div className="absolute top-0 left-0 z-0 h-full w-full rounded-full 
+            shadow-[0_0_6px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.08),inset_3px_3px_0.5px_-3px_rgba(0,0,0,0.9),inset_-3px_-3px_0.5px_-3px_rgba(0,0,0,0.85),inset_1px_1px_1px_-0.5px_rgba(0,0,0,0.6),inset_-1px_-1px_1px_-0.5px_rgba(0,0,0,0.6),inset_0_0_6px_6px_rgba(0,0,0,0.12),inset_0_0_2px_2px_rgba(0,0,0,0.06),0_0_12px_rgba(255,255,255,0.15)] 
+        transition-all 
+        dark:shadow-[0_0_8px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.08),inset_3px_3px_0.5px_-3.5px_rgba(255,255,255,0.09),inset_-3px_-3px_0.5px_-3.5px_rgba(255,255,255,0.85),inset_1px_1px_1px_-0.5px_rgba(255,255,255,0.6),inset_-1px_-1px_1px_-0.5px_rgba(255,255,255,0.6),inset_0_0_6px_6px_rgba(255,255,255,0.12),inset_0_0_2px_2px_rgba(255,255,255,0.06),0_0_12px_rgba(0,0,0,0.15)]" />
         <div
           className="absolute top-0 left-0 isolate -z-10 h-full w-full overflow-hidden rounded-md"
           style={{ backdropFilter: 'url("#container-glass")' }}
         />
+
         <div className="pointer-events-none z-10 ">
           {children}
         </div>
@@ -128,7 +159,7 @@ function LiquidButton({
 
 function GlassFilter() {
   return (
-    <svg className="hidden gap-0">
+    <svg className="hidden">
       <defs>
         <filter
           id="container-glass"
@@ -170,7 +201,7 @@ type ColorVariant =
   | "gold"
   | "bronze";
  
-export interface MetalButtonProps
+interface MetalButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ColorVariant;
 }
@@ -308,7 +339,7 @@ export const MetalButton = React.forwardRef<
  
   const buttonText = children || "Button";
   const variants = metalButtonVariants(
-    variant as ColorVariant,
+    variant,
     isPressed,
     isHovered,
     isTouchDevice,
@@ -365,3 +396,79 @@ export const MetalButton = React.forwardRef<
   );
 });
 MetalButton.displayName = "MetalButton";
+
+4. LANDING PAGE SECTIONS & STRUCTURE (REPLICATING RAILROAD.AI AESTHETICS)
+
+SECTION 1: HERO CONTAINER (IDENTICAL TO THE ATTACHED RAILROAD.AI VISUALS)
+
+  - Recreate the magnificent viewport frame: A train window wrapper displaying a
+    lush background video.
+  - Background Video Placement: Leave a fluid HTML5 video element playing inside
+    this window frame as a visual placeholder.
+  - Top Navbar:
+      - Left: Logo text "WinkyTalk" next to an open-source visual accent.
+      - Center: Minimal glassmorphism navigation pill containing: "Home",
+        "Overview", "Capabilities", "Github".
+      - Right: Liquid Glass Button (variant: "outline" or "default") saying "Get
+        Started →"
+  - Centered Hero Elements:
+      - Badge: Frosted glass badge stating "10K+ already subscribed".
+      - Heading (Inter, 60px, Tracking-tight, Tracking-space: -4px): "Control
+        Your Browser With Your Voice" or "AI That Sees, Hears, and Acts on
+        Command". Run the split-word delayed fade-in animation logic on load.
+      - Subheading (16px, DM Sans): "Interact naturally with a playful,
+        hands-free AI. Command browser action, translate speech in real-time,
+        and control system hardware without lifting a finger."
+      - Form Wrapper (liquid-glass): A pill-shaped email input field featuring a
+        Liquid Glass Button containing the action text "Join Waitlist →".
+
+SECTION 2: VALUE PROPOSITIONS (1, 2, 3 - PRE-POPULATED FOR WINKYTALK)
+
+Generate a clean three-card value proposition layout styled with subtle
+glassmorphism and light accents:
+
+  - Card 1 (Hands-Free Speech Interaction):
+      - Header: "Natural Voice Agency"
+      - Copy: "Equipped with advanced STT & TTS pipeline, WinkyTalk listens to
+        your natural voice commands, processes the semantic context, and replies
+        instantly."
+  - Card 2 (Vision-Capable Companion):
+      - Header: "Vision & Spatial Awareness"
+      - Copy: "Through direct web camera streams, WinkyTalk sees,
+        object-classifies, and interprets the visual context of its immediate
+        workspace."
+  - Card 3 (Hardware Integration API):
+      - Header: "Hardware & Tool Actioning"
+      - Copy: "Beyond browser limits, WinkyTalk interacts with locally connected
+        development nodes, executing script-defined operations with
+        browser-based automation."
+
+SECTION 3: PROOF, TESTIMONIALS & INTEGRATED FORM
+
+  - Include an split grid layout.
+  - Left column: A clean portrait frame housing a professional, premium Unsplash
+    workplace stock image representing collaboration or active hardware
+    interface.
+  - Right column:
+      - A prominent blockquote: "Integrating WinkyTalk into our hardware
+        pipeline completely changed how our developers interface with physical
+        endpoints. It's the ultimate hand-free web agent."
+      - Author tag: "Alex Rivera, Tech Lead @ OpenNodes"
+      - Directly beneath this quote, place the integrated Lead Generation Form.
+        It should feature a clean name input, an email input, and submit the
+        action using the custom MetalButton (variant: "gold" or "success").
+
+SECTION 4: "A QUIET PLACE TO SEE WHAT'S NEW" SHOWCASE (IDENTICAL RESTFUL REPLICATION)
+
+Replicate the restful, luminescent visual design of this quiet viewport:
+
+  - Header: "A Quiet Place to See What's New."
+  - Set up a clean, modern showcase featuring open-source developments from
+    GitHub user winky-x.
+  - Include a high-end showcase card specifically highlighting the repository:
+    github.com/winky-x/winkywebagent.
+  - Frame the repository with active SVG icons showing stars, forks, and
+    codebase activity indicators. Include a prominent Liquid Button allowing
+    users to directly inspect the repository.
+
+***
