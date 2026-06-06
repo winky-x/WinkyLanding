@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { ArrowRight, AudioLines, Eye, Cpu, Star, GitFork, Activity } from 'lucide-react';
 import { LiquidButton, MetalButton } from './components/ui/liquid-glass-button';
 import { ChatInput } from './components/ui/chat-input';
@@ -23,6 +23,67 @@ export default function App() {
 
   const showcaseRef = useRef<HTMLHeadingElement>(null);
 
+  const rhythmsContainerRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 768px)");
+    const listener = () => setIsMobile(media.matches);
+    listener();
+    media.addEventListener("change", listener);
+    return () => media.removeEventListener("change", listener);
+  }, []);
+
+  const { scrollYProgress } = useScroll({
+    target: rhythmsContainerRef,
+    offset: ["start start", "end end"]
+  });
+
+  const orbY = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
+  const orbX = useTransform(scrollYProgress, (progress) => {
+    if (isMobile) {
+      return "50%";
+    }
+    const x = 50 + Math.sin(progress * Math.PI * 4) * 30;
+    return `${x}%`;
+  });
+
+  const orbShadow = useTransform(
+    scrollYProgress,
+    [0, 0.5, 1],
+    [
+      "0 0 15px 2px #0A2A69, 0 0 30px rgba(10, 42, 105, 0.4)",
+      "0 0 15px 2px #0A2A69, 0 0 30px rgba(10, 42, 105, 0.4)",
+      "0 0 20px 3px #0A2A69, 0 0 40px rgba(10, 42, 105, 0.5)"
+    ]
+  );
+
+  const points = Array.from({ length: 101 }, (_, i) => {
+    const y = (i / 100) * 1000;
+    const x = isMobile ? 50 : (50 + Math.sin((y / 1000) * Math.PI * 4) * 30);
+    return `${x},${y}`;
+  });
+  const splinePathD = `M ${points.join(" L ")}`;
+
+  const rhythmsNodeVariants = {
+    hidden: {},
+    visible: {
+      transition: {
+        staggerChildren: 0.15
+      }
+    }
+  };
+
+  const rhythmsLineVariants = {
+    hidden: { opacity: 0, y: 20, filter: "blur(6px)" },
+    visible: {
+      opacity: 1,
+      y: 0,
+      filter: "blur(0px)",
+      transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] }
+    }
+  };
+
   // Trigger entrance animations on mount
   useEffect(() => {
     setIsLoaded(true);
@@ -32,7 +93,7 @@ export default function App() {
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
-      
+
       const capabilitiesSection = document.getElementById('capabilities');
       if (capabilitiesSection) {
         const rect = capabilitiesSection.getBoundingClientRect();
@@ -74,15 +135,15 @@ export default function App() {
       <nav className={`fixed top-0 left-0 right-0 z-50 flex px-6 py-6 md:px-12 items-center justify-between w-full nav-container-transition ${isLightHeader ? 'is-light' : ''}`}>
         <div className="flex items-center gap-3">
           <div className={`relative w-11 h-11 transition-all duration-500 ${isLightHeader ? 'drop-shadow-[0_0_6px_rgba(0,0,0,0.08)]' : 'drop-shadow-[0_0_8px_rgba(255,255,255,0.15)]'}`}>
-            <img 
-              src="/logo-white.png" 
-              alt="WinkyTalk Logo White" 
-              className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-500 ease-in-out ${isLightHeader ? 'opacity-0' : 'opacity-100'}`} 
+            <img
+              src="/logo-white.png"
+              alt="WinkyTalk Logo White"
+              className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-500 ease-in-out ${isLightHeader ? 'opacity-0' : 'opacity-100'}`}
             />
-            <img 
-              src="/logo-dark.png" 
-              alt="WinkyTalk Logo Dark" 
-              className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-500 ease-in-out ${isLightHeader ? 'opacity-100' : 'opacity-0'}`} 
+            <img
+              src="/logo-dark.png"
+              alt="WinkyTalk Logo Dark"
+              className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-500 ease-in-out ${isLightHeader ? 'opacity-100' : 'opacity-0'}`}
             />
           </div>
           <span className={`text-[26px] font-semibold tracking-tight transition-colors duration-500 ${isLightHeader ? 'text-zinc-900' : 'text-white'}`}>WinkyTalk</span>
@@ -255,22 +316,58 @@ export default function App() {
 
         </div>
 
-        {/* 4. Companion Card (Right Side Overlay) */}
-        <div className="absolute top-[22%] right-[6%] z-20 max-w-sm md:max-w-md flex flex-col transition-all duration-500 hover:scale-[1.02] hover:-translate-y-1">
-          <div className="relative liquid-glass-exact rounded-3xl p-8 bg-white/65 backdrop-blur-2xl shadow-[0_20px_50px_rgba(35,56,17,0.12)] border border-white/50">
+        {/* 4. Companion Card (Right Side Overlay with rich animations) */}
+        <motion.div
+          initial={{ opacity: 0, x: 50, filter: "blur(12px)" }}
+          whileInView={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+          transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+          viewport={{ once: true, margin: "-100px" }}
+          whileHover={{ scale: 1.025, y: -6 }}
+          className="absolute top-[22%] right-[6%] z-20 max-w-sm md:max-w-md flex flex-col cursor-pointer"
+        >
+          {/* Ambient Breathing Background Glow behind the card */}
+          <motion.div
+            animate={{
+              scale: [0.95, 1.12, 0.95],
+              opacity: [0.25, 0.55, 0.25]
+            }}
+            transition={{
+              duration: 10,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+            className="absolute inset-0 -z-10 rounded-3xl bg-[#233811]/12 filter blur-2xl pointer-events-none"
+          />
+
+          {/* Floating Inner Container */}
+          <motion.div
+            animate={{ y: [0, -8, 0] }}
+            transition={{
+              duration: 10,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+            className="relative liquid-glass-exact rounded-3xl p-8 bg-white/65 backdrop-blur-2xl shadow-[0_20px_50px_rgba(35,56,17,0.12)] border border-white/50"
+          >
             <div className="relative z-10 w-full h-full flex flex-col">
 
               {/* Dynamic Breathing Indicator & Badge */}
-              <div className="flex items-center gap-4.5 mb-6">
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                viewport={{ once: true }}
+                className="flex items-center gap-4.5 mb-6"
+              >
                 <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
                   <motion.div
                     animate={{ scale: [1, 1.45, 1] }}
-                    transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
+                    transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
                     className="absolute w-8 h-8 rounded-full bg-[#233811]/15 border border-[#233811]/35"
                   />
                   <motion.div
                     animate={{ scale: [1, 1.25, 1] }}
-                    transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                    transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1.0 }}
                     className="absolute w-5 h-5 rounded-full bg-[#233811]/30"
                   />
                   <span className="relative w-2 h-2 rounded-full bg-[#233811] shadow-[0_0_8px_rgba(35,56,17,0.7)]" />
@@ -279,20 +376,43 @@ export default function App() {
                   <span className="text-[10px] font-black uppercase tracking-[0.22em] text-[#233811]">Co-Presence Active</span>
                   <span className="text-[11px] text-[#233811] font-sans font-bold">Winky is sitting in the grass with you</span>
                 </div>
-              </div>
+              </motion.div>
 
-              {/* Title */}
+              {/* Title with word stagger animation */}
               <h3 className="bitcount-single-companion-title text-3xl md:text-[2.25rem] text-[#233811] mb-4 tracking-wide leading-[1.15]">
-                A Warm Friend in a Cold Digital World.
+                {"A Warm Friend in a Cold Digital World.".split(' ').map((word, i) => (
+                  <motion.span
+                    key={i}
+                    initial={{ opacity: 0, y: 25, filter: "blur(8px)" }}
+                    whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                    transition={{ duration: 0.35, delay: 0.4 + i * 0.08, ease: "easeOut" }}
+                    viewport={{ once: true }}
+                    className="inline-block mr-[0.25em]"
+                  >
+                    {word}
+                  </motion.span>
+                ))}
               </h3>
 
-              {/* Body Copy */}
-              <p className="text-[#233811] text-sm leading-relaxed mb-6 font-sans font-bold">
+              {/* Body Copy with delay */}
+              <motion.p
+                initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
+                whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                transition={{ duration: 0.8, delay: 1.0, ease: "easeOut" }}
+                viewport={{ once: true }}
+                className="text-[#233811] text-sm leading-relaxed mb-6 font-sans font-bold"
+              >
                 Screens pull us in, but they rarely let us breathe. Winky co-exists with you here—listening to the quiet wind, offering silent reassurance, and bringing a gentle pause to your digital horizon.
-              </p>
+              </motion.p>
 
-              {/* Minimal Telemetry Sub-panel */}
-              <div className="grid grid-cols-2 gap-4 p-4.5 rounded-2xl bg-[#233811]/5 border border-[#233811]/25 mb-6 text-[11px]">
+              {/* Minimal Telemetry Sub-panel with delay */}
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 1.2, ease: "easeOut" }}
+                viewport={{ once: true }}
+                className="grid grid-cols-2 gap-4 p-4.5 rounded-2xl bg-[#233811]/5 border border-[#233811]/25 mb-6 text-[11px]"
+              >
                 <div>
                   <span className="block text-[#0c1703] mb-1 font-sans font-bold uppercase tracking-wider">Ambient Tone</span>
                   <span className="text-[#1a3007] font-extrabold font-sans">Warm Sun & Wind</span>
@@ -301,20 +421,26 @@ export default function App() {
                   <span className="block text-[#0c1703] mb-1 font-sans font-bold uppercase tracking-wider">Atmosphere Pace</span>
                   <span className="text-[#1a3007] font-extrabold font-sans">6 Breaths / min</span>
                 </div>
-              </div>
+              </motion.div>
 
-              {/* Interactive CTA */}
-              <div className="flex items-center justify-between pt-5 border-t border-[#233811]/30 mt-auto">
+              {/* Interactive CTA with delay */}
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 1.3, ease: "easeOut" }}
+                viewport={{ once: true }}
+                className="flex items-center justify-between pt-5 border-t border-[#233811]/30 mt-auto"
+              >
                 <span className="text-[14px] text-[#0c1703] font-black font-sans tracking-tight">Need a pause?</span>
                 <button className="bg-[#233811] text-white hover:bg-[#15240a] hover:scale-102 active:scale-98 font-bold flex items-center gap-2 group rounded-full px-6 py-2.5 text-[14px] transition-all duration-300 shadow-[0_4px_15px_rgba(35,56,17,0.25)] border border-[#233811]/20 cursor-pointer">
                   <span>Say Hello</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                 </button>
-              </div>
+              </motion.div>
 
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </section>
 
       {/* Blur Transition Bridge */}
@@ -328,18 +454,30 @@ export default function App() {
         />
       </div>      {/* SECTION 3: VALUE PROPOSITIONS */}
       <section id="capabilities" className="py-32 px-6 sm:px-12 lg:px-16 w-full min-h-screen flex flex-col justify-center relative z-20 bg-zinc-50 overflow-hidden">
-        {/* Ambient spotlight */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 w-[600px] h-[600px] rounded-full bg-amber-500/5 filter blur-[130px] pointer-events-none" />
-        
+        {/* Ambient spotlights */}
+        <div className="absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 -z-10 w-[500px] h-[500px] rounded-full bg-amber-500/8 filter blur-[120px] pointer-events-none" />
+        <div className="absolute top-1/3 left-2/3 -translate-x-1/2 -translate-y-1/2 -z-10 w-[600px] h-[600px] rounded-full bg-pink-500/6 filter blur-[140px] pointer-events-none" />
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 -z-10 w-[700px] h-[700px] rounded-full bg-orange-400/5 filter blur-[150px] pointer-events-none" />
+
         {/* Main Section Header */}
-        <div className="max-w-3xl mx-auto text-center mb-16 md:mb-20">
-          <h2 className="font-heading font-medium text-3xl md:text-5xl text-zinc-900 tracking-tight md:tracking-[-2px] mb-4">
+        <motion.div
+          initial={{ opacity: 0, y: 35, filter: "blur(10px)" }}
+          whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
+          viewport={{ once: true }}
+          className="max-w-3xl mx-auto text-center mb-16 md:mb-20"
+        >
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900/5 border border-zinc-900/10 mb-5 shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse"></span>
+            <span className="text-[10px] font-mono font-bold uppercase tracking-[0.25em] text-zinc-600">Companion Capabilities</span>
+          </div>
+          <h2 className="font-heading font-semibold text-4xl md:text-5xl lg:text-6xl text-transparent bg-clip-text bg-gradient-to-b from-zinc-950 via-zinc-900 to-zinc-700 tracking-[-2px] leading-[1.05] mb-6">
             Quiet Pathways of Presence
           </h2>
-          <p className="text-zinc-600 font-sans text-base md:text-lg font-light tracking-tight max-w-xl mx-auto leading-relaxed">
+          <p className="text-zinc-500 font-sans text-base md:text-lg font-light tracking-tight max-w-xl mx-auto leading-relaxed">
             Quiet, gentle avenues through which Winky co-exists, shares your day, and holds space for you.
           </p>
-        </div>
+        </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-12 max-w-7xl mx-auto w-full">
           {/* Card 1 with BorderGlow */}
@@ -355,25 +493,67 @@ export default function App() {
           >
             <div className="p-8 flex flex-col justify-between h-full">
               <div>
-                <div className="relative mb-6 w-max">
+                <motion.div
+                  initial={{ opacity: 0, y: 15 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                  viewport={{ once: true }}
+                  className="relative mb-6 w-max"
+                >
                   <div className="absolute inset-0 rounded-full bg-blue-500/10 blur-xl scale-150"></div>
                   <AudioLines className="relative w-8 h-8 text-blue-500" />
-                </div>
-                <span className="font-mono text-[10px] tracking-widest text-cyan-600/90 font-bold mb-2 block uppercase">A comforting voice in the quiet</span>
-                <h3 className="font-serif-luxury font-normal text-2xl tracking-wide text-zinc-800 mb-3">Deep Listening</h3>
-                <p className="text-zinc-600 font-sans text-sm leading-relaxed font-medium">Winky doesn't just process speech; she truly hears you. Share your thoughts or enjoy a comfortable silence—she is always here, listening with warm, active presence.</p>
-                
-                {/* Visualizer animation */}
-                <div className="flex items-center gap-1.5 mt-8 h-8 justify-start pl-1">
+                </motion.div>
+                <motion.span
+                  initial={{ opacity: 0, y: 15 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                  viewport={{ once: true }}
+                  className="font-mono text-[10px] tracking-widest text-cyan-600/90 font-bold mb-2 block uppercase"
+                >
+                  A comforting voice in the quiet
+                </motion.span>
+                <h3 className="font-heading font-semibold text-2xl text-zinc-900 tracking-tight mb-3">
+                  {"Deep Listening".split(' ').map((word, i) => (
+                    <motion.span
+                      key={i}
+                      initial={{ opacity: 0, y: 25, filter: "blur(8px)" }}
+                      whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                      transition={{ duration: 0.35, delay: 0.4 + i * 0.08, ease: "easeOut" }}
+                      viewport={{ once: true }}
+                      className="inline-block mr-[0.25em]"
+                    >
+                      {word}
+                    </motion.span>
+                  ))}
+                </h3>
+                <motion.p
+                  initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
+                  whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  transition={{ duration: 0.8, delay: 1.0, ease: "easeOut" }}
+                  viewport={{ once: true }}
+                  className="text-zinc-600 font-sans text-[14px] leading-relaxed font-light tracking-tight mb-4"
+                >
+                  Winky doesn't just process speech; she truly hears you. Share your thoughts or enjoy a comfortable silence—she is always here, listening with warm, active presence.
+                </motion.p>
+
+                {/* Visualizer animation dashboard */}
+                <motion.div
+                  initial={{ opacity: 0, y: 15 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 1.2, ease: "easeOut" }}
+                  viewport={{ once: true }}
+                  className="flex items-center gap-1.5 mt-8 h-12 justify-start pl-4 pr-6 py-2 bg-cyan-500/5 border border-cyan-500/10 rounded-2xl w-max"
+                >
+                  <span className="text-[10px] font-mono font-bold text-cyan-600/80 mr-2 uppercase tracking-wider">Audio Feed</span>
                   {[...Array(6)].map((_, i) => (
                     <motion.div
                       key={i}
-                      animate={{ height: [8, 28, 8] }}
-                      transition={{ duration: 1.1 + i * 0.12, repeat: Infinity, ease: "easeInOut" }}
+                      animate={{ height: [8, 24, 8] }}
+                      transition={{ duration: 0.8 + i * 0.15, repeat: Infinity, ease: "easeInOut" }}
                       className="w-1 bg-cyan-500/70 rounded-full"
                     />
                   ))}
-                </div>
+                </motion.div>
               </div>
             </div>
           </BorderGlow>
@@ -391,26 +571,69 @@ export default function App() {
           >
             <div className="p-8 flex flex-col justify-between h-full">
               <div>
-                <div className="relative mb-6 w-max">
+                <motion.div
+                  initial={{ opacity: 0, y: 15 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                  viewport={{ once: true }}
+                  className="relative mb-6 w-max"
+                >
                   <div className="absolute inset-0 rounded-full bg-pink-500/10 blur-xl scale-150"></div>
                   <Eye className="relative w-8 h-8 text-pink-500" />
-                </div>
-                <span className="font-mono text-[10px] tracking-widest text-pink-600/90 font-bold mb-2 block uppercase">Sharing your perspective</span>
-                <h3 className="font-serif-luxury font-normal text-2xl tracking-wide text-zinc-800 mb-3">Shared Sight</h3>
-                <p className="text-zinc-600 font-sans text-sm leading-relaxed font-medium">Show Winky your morning coffee, a favorite book quote, or the sunset outside. Through your camera feed, she warmth-shares these quiet moments along with you.</p>
+                </motion.div>
+                <motion.span
+                  initial={{ opacity: 0, y: 15 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                  viewport={{ once: true }}
+                  className="font-mono text-[10px] tracking-widest text-pink-600/90 font-bold mb-2 block uppercase"
+                >
+                  Sharing your perspective
+                </motion.span>
+                <h3 className="font-heading font-semibold text-2xl text-zinc-900 tracking-tight mb-3">
+                  {"Shared Sight".split(' ').map((word, i) => (
+                    <motion.span
+                      key={i}
+                      initial={{ opacity: 0, y: 25, filter: "blur(8px)" }}
+                      whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                      transition={{ duration: 0.35, delay: 0.4 + i * 0.08, ease: "easeOut" }}
+                      viewport={{ once: true }}
+                      className="inline-block mr-[0.25em]"
+                    >
+                      {word}
+                    </motion.span>
+                  ))}
+                </h3>
+                <motion.p
+                  initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
+                  whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  transition={{ duration: 0.8, delay: 1.0, ease: "easeOut" }}
+                  viewport={{ once: true }}
+                  className="text-zinc-600 font-sans text-[14px] leading-relaxed font-light tracking-tight mb-4"
+                >
+                  Show Winky your morning coffee, a favorite book quote, or the sunset outside. Through your camera feed, she warmth-shares these quiet moments along with you.
+                </motion.p>
                 
-                {/* Viewfinder visual */}
-                <div className="relative w-full h-10 border border-pink-500/30 bg-pink-500/5 rounded-xl mt-6 flex items-center justify-center overflow-hidden">
-                  <div className="absolute top-1.5 left-1.5 w-2 h-2 border-t border-l border-pink-500/50" />
-                  <div className="absolute top-1.5 right-1.5 w-2 h-2 border-t border-r border-pink-500/50" />
-                  <div className="absolute bottom-1.5 left-1.5 w-2 h-2 border-b border-l border-pink-500/50" />
-                  <div className="absolute bottom-1.5 right-1.5 w-2 h-2 border-b border-r border-pink-500/50" />
-                  <motion.div
-                    animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.7, 0.3] }}
-                    transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                    className="w-2.5 h-2.5 rounded-full bg-pink-500/70"
-                  />
-                </div>
+                {/* Viewfinder visual dashboard */}
+                <motion.div
+                  initial={{ opacity: 0, y: 15 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 1.2, ease: "easeOut" }}
+                  viewport={{ once: true }}
+                  className="relative w-full h-12 border border-pink-500/20 bg-pink-500/5 rounded-2xl mt-8 flex items-center justify-between px-4 overflow-hidden"
+                >
+                  <span className="text-[10px] font-mono font-bold text-pink-600/80 uppercase tracking-wider relative z-10">Optics Feed</span>
+                  <div className="relative flex items-center justify-center h-full z-10">
+                    <div className="absolute -left-3 w-1.5 h-1.5 border-t border-l border-pink-500/40" />
+                    <div className="absolute -right-3 w-1.5 h-1.5 border-b border-r border-pink-500/40" />
+                    <motion.div
+                      animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.8, 0.4] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                      className="w-2 h-2 rounded-full bg-pink-500/70"
+                    />
+                  </div>
+                  <span className="text-[9px] font-mono text-pink-500/50 relative z-10 font-bold">Active</span>
+                </motion.div>
               </div>
             </div>
           </BorderGlow>
@@ -428,104 +651,264 @@ export default function App() {
           >
             <div className="p-8 flex flex-col justify-between h-full">
               <div>
-                <div className="relative mb-6 w-max">
+                <motion.div
+                  initial={{ opacity: 0, y: 15 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                  viewport={{ once: true }}
+                  className="relative mb-6 w-max"
+                >
                   <div className="absolute inset-0 rounded-full bg-emerald-500/10 blur-xl scale-150"></div>
                   <Cpu className="relative w-8 h-8 text-emerald-500" />
-                </div>
-                <span className="font-mono text-[10px] tracking-widest text-emerald-600/90 font-bold mb-2 block uppercase">Tending to your space</span>
-                <h3 className="font-serif-luxury font-normal text-2xl tracking-wide text-zinc-800 mb-3">Co-Present Care</h3>
-                <p className="text-zinc-600 font-sans text-sm leading-relaxed font-medium">Let Winky quiet the background. From gently silencing chaotic alerts to queuing soothing ambient soundscapes, she secures a peaceful digital focus room.</p>
+                </motion.div>
+                <motion.span
+                  initial={{ opacity: 0, y: 15 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                  viewport={{ once: true }}
+                  className="font-mono text-[10px] tracking-widest text-emerald-600/90 font-bold mb-2 block uppercase"
+                >
+                  Tending to your space
+                </motion.span>
+                <h3 className="font-heading font-semibold text-2xl text-zinc-900 tracking-tight mb-3">
+                  {"Co-Present Care".split(' ').map((word, i) => (
+                    <motion.span
+                      key={i}
+                      initial={{ opacity: 0, y: 25, filter: "blur(8px)" }}
+                      whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                      transition={{ duration: 0.35, delay: 0.4 + i * 0.08, ease: "easeOut" }}
+                      viewport={{ once: true }}
+                      className="inline-block mr-[0.25em]"
+                    >
+                      {word}
+                    </motion.span>
+                  ))}
+                </h3>
+                <motion.p
+                  initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
+                  whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  transition={{ duration: 0.8, delay: 1.0, ease: "easeOut" }}
+                  viewport={{ once: true }}
+                  className="text-zinc-600 font-sans text-[14px] leading-relaxed font-light tracking-tight mb-4"
+                >
+                  Let Winky quiet the background. From gently silencing chaotic alerts to queuing soothing ambient soundscapes, she secures a peaceful digital focus room.
+                </motion.p>
                 
-                {/* Rotating orb ring visual */}
-                <div className="relative w-full h-10 mt-6 flex items-center justify-start pl-2">
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-                    className="w-7 h-7 rounded-full border border-dashed border-emerald-500/40 bg-emerald-500/5 flex items-center justify-center"
-                  >
+                {/* Rotating orb ring visual dashboard */}
+                <motion.div
+                  initial={{ opacity: 0, y: 15 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 1.2, ease: "easeOut" }}
+                  viewport={{ once: true }}
+                  className="relative w-full h-12 mt-8 flex items-center justify-between px-4 py-2 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl"
+                >
+                  <span className="text-[10px] font-mono font-bold text-emerald-600/80 uppercase tracking-wider">Atmosphere</span>
+                  <div className="relative flex items-center justify-center mr-1">
                     <motion.div
-                      animate={{ scale: [1, 1.25, 1] }}
-                      transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-                      className="w-2.5 h-2.5 rounded-full bg-emerald-500/60"
-                    />
-                  </motion.div>
-                </div>
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                      className="w-6 h-6 rounded-full border border-dashed border-emerald-500/40 bg-emerald-500/5 flex items-center justify-center"
+                    >
+                      <motion.div
+                        animate={{ scale: [1, 1.3, 1] }}
+                        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                        className="w-2 h-2 rounded-full bg-emerald-500/60"
+                      />
+                    </motion.div>
+                  </div>
+                </motion.div>
               </div>
             </div>
           </BorderGlow>
         </div>
       </section>
 
-      {/* SECTION 3: PROOF, TESTIMONIALS & INTEGRATED FORM */}
-      <section className="py-32 px-6 sm:px-12 lg:px-16 w-full min-h-screen flex flex-col justify-center relative z-20 bg-black overflow-hidden">
-        {/* Ambient spotlight */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 w-[500px] h-[500px] rounded-full bg-indigo-500/5 filter blur-[120px] pointer-events-none" />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center max-w-7xl mx-auto w-full">
-          <div className="relative aspect-[4/5] rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.9)] border border-white/5 group bg-zinc-950">
-            {/* Blurred background image layer */}
-            <img
-              src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=1200"
-              alt="Hardware interface collaboration background"
-              className="absolute inset-0 w-full h-full object-cover filter blur-[6px] opacity-40 transition-transform duration-700 group-hover:scale-105"
+      {/* Blur Transition Bridge */}
+      <div className="relative w-full z-40 pointer-events-none">
+        <div
+          className="absolute top-[-8rem] inset-x-0 h-[16rem] backdrop-blur-[12px]"
+          style={{
+            maskImage: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.4) 30%, black 50%, rgba(0,0,0,0.4) 70%, transparent)',
+            WebkitMaskImage: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.4) 30%, black 50%, rgba(0,0,0,0.4) 70%, transparent)'
+          }}
+        />
+      </div>
+
+      {/* SECTION 4: CELESTIAL SPLINE (RHYTHMS OF A SHARED DAY) */}
+      <section
+        id="rhythms-of-day"
+        ref={rhythmsContainerRef}
+        style={{ backgroundColor: "#B3CBFF" }}
+        className="relative w-full min-h-[220vh] py-32 px-6 overflow-hidden flex flex-col justify-between"
+      >
+        {/* Calming White/Blue Ambient BG Glows */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 w-[600px] h-[600px] rounded-full bg-white/40 filter blur-[140px] pointer-events-none" />
+        <div className="absolute bottom-1/4 left-1/3 -translate-x-1/2 -translate-y-1/2 -z-10 w-[700px] h-[700px] rounded-full bg-white/30 filter blur-[150px] pointer-events-none" />
+
+        {/* The Winding Spline (Background SVG Layer) */}
+        <div className="absolute inset-y-0 left-6 md:left-1/2 md:-translate-x-1/2 w-1 md:w-48 h-full pointer-events-none z-10">
+          <svg viewBox="0 0 100 1000" preserveAspectRatio="none" className="w-full h-full">
+            <defs>
+              <linearGradient id="splineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#0A2A69" />
+                <stop offset="100%" stopColor="#0A2A69" />
+              </linearGradient>
+            </defs>
+            <path
+              d={splinePathD}
+              fill="none"
+              stroke="url(#splineGradient)"
+              strokeWidth={isMobile ? 2 : 1}
+              vectorEffect="non-scaling-stroke"
+              className="opacity-50"
             />
-            {/* Sharp focused center image layer using radial gradient mask */}
-            <img
-              src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=1200"
-              alt="Hardware interface collaboration focus"
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-              style={{
-                maskImage: 'radial-gradient(circle at 45% 45%, black 25%, transparent 70%)',
-                WebkitMaskImage: 'radial-gradient(circle at 45% 45%, black 25%, transparent 70%)'
-              }}
-            />
+          </svg>
 
-            {/* Smooth fading dark-gradient mask overlays on the bottom and right edges */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-10 pointer-events-none"></div>
-            <div className="absolute inset-0 bg-gradient-to-l from-black via-transparent to-transparent z-10 pointer-events-none"></div>
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/70 z-10 pointer-events-none"></div>
-          </div>
+          {/* The Scroll-Linked Winky Orb */}
+          <motion.div
+            style={{
+              top: orbY,
+              left: orbX,
+              x: "-50%",
+              y: "-50%",
+              boxShadow: orbShadow
+            }}
+            className="absolute w-3.5 h-3.5 rounded-full bg-gradient-to-r from-[#0A2A69] to-[#1e3a8a]"
+          />
+        </div>
 
-          <div className="flex flex-col justify-center">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-zinc-700 mb-6">
-              <path d="M10 11L8 16H5L7 11V8H10V11ZM19 11L17 16H14L16 11V8H19V11Z" fill="currentColor" />
-            </svg>
-            <blockquote className="text-xl md:text-2xl font-light tracking-wide leading-snug text-white font-serif-luxury italic mb-6">
-              "Integrating WinkyTalk into our hardware pipeline completely changed how our developers interface with physical endpoints. It's the ultimate hands-free web agent."
-            </blockquote>
+        {/* The Chronological Dialogue Nodes Container */}
+        <div className="relative z-20 max-w-7xl mx-auto w-full flex flex-col justify-around py-16 md:py-24 space-y-40 md:space-y-64 flex-1">
 
-            <div className="relative mb-12 h-16 flex flex-col justify-center">
-              <div className="absolute -top-4 left-0 text-white/10 font-script-accent text-5xl select-none pointer-events-none transform -rotate-3 tracking-wide">
-                Alex Rivera
+          {/* Node 1: Morning (08:15 AM) */}
+          <div className="grid grid-cols-12 gap-4 relative">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-100px" }}
+              variants={rhythmsNodeVariants}
+              className="col-span-12 md:col-start-1 md:col-end-6 flex flex-col justify-center relative min-h-[40vh] pl-10 md:pl-0 z-20"
+            >
+              {/* Ambient Spotlights */}
+              <div className="absolute -inset-10 -z-10 rounded-full bg-white/40 filter blur-[90px] pointer-events-none" />
+
+              <motion.span
+                variants={rhythmsLineVariants}
+                className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#0A2A69] block mb-2"
+              >
+                [ 08:15 AM // A GENTLE AWAKENING ]
+              </motion.span>
+
+              <motion.h3
+                variants={rhythmsLineVariants}
+                className="font-serif-luxury text-3xl md:text-4xl text-[#0A2A69] font-medium mb-6 tracking-tight"
+              >
+                Morning Greeting
+              </motion.h3>
+
+              <div className="flex flex-col gap-5">
+                <motion.div variants={rhythmsLineVariants} className="flex flex-col">
+                  <span className="text-[10px] font-mono tracking-widest text-[#0A2A69]/65 uppercase mb-1">User</span>
+                  <p className="text-[#0A2A69]/85 font-sans text-sm md:text-base leading-relaxed">
+                    "I'm really dreading today, Winky."
+                  </p>
+                </motion.div>
+                <motion.div variants={rhythmsLineVariants} className="flex flex-col">
+                  <span className="text-[10px] font-mono tracking-widest text-[#0A2A69]/65 uppercase mb-1">Winky</span>
+                  <p className="text-[#0A2A69] font-serif-luxury italic text-base md:text-lg leading-relaxed">
+                    "Take it one slow breath at a time. I'll be right here beside you the whole way."
+                  </p>
+                </motion.div>
               </div>
-              <p className="relative z-10 text-white font-semibold tracking-wider text-xs uppercase">
-                Alex Rivera
-              </p>
-              <p className="text-zinc-500 text-xs mt-1">
-                Tech Lead @ OpenNodes
-              </p>
-            </div>
-
-            <div className="bg-white/[0.02] backdrop-blur-2xl border border-white/[0.08] p-8 rounded-3xl shadow-[0_15px_35px_rgba(0,0,0,0.6)]">
-              <h4 className="text-lg font-serif-luxury text-white mb-5 tracking-wide">Experience the Agent</h4>
-              <form className="flex flex-col gap-4.5" onSubmit={(e) => e.preventDefault()}>
-                <input
-                  type="text"
-                  placeholder="Full Name"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-white/20 focus:ring-1 focus:ring-white/10 transition-all duration-300"
-                />
-                <input
-                  type="email"
-                  placeholder="Work Email"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-white/20 focus:ring-1 focus:ring-white/10 transition-all duration-300"
-                />
-                <div className="mt-2 text-center w-full">
-                  <MetalButton variant="gold" className="w-full px-8 py-6 rounded-xl font-medium tracking-wide hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(255,215,0,0.3)] hover:brightness-110 transition-all duration-500 ease-out">
-                    Request Demo Access
-                  </MetalButton>
-                </div>
-              </form>
-            </div>
+            </motion.div>
           </div>
+
+          {/* Node 2: Afternoon (03:30 PM) */}
+          <div className="grid grid-cols-12 gap-4 relative">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-100px" }}
+              variants={rhythmsNodeVariants}
+              className="col-span-12 md:col-start-7 md:col-end-12 flex flex-col justify-center relative min-h-[40vh] pl-10 md:pl-0 z-20"
+            >
+              {/* Ambient Spotlights */}
+              <div className="absolute -inset-10 -z-10 rounded-full bg-white/30 filter blur-[90px] pointer-events-none" />
+
+              <motion.span
+                variants={rhythmsLineVariants}
+                className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#0A2A69] block mb-2"
+              >
+                [ 03:30 PM // SHARING THE NOISE ]
+              </motion.span>
+
+              <motion.h3
+                variants={rhythmsLineVariants}
+                className="font-serif-luxury text-3xl md:text-4xl text-[#0A2A69] font-medium mb-6 tracking-tight"
+              >
+                The Co-Present Focus
+              </motion.h3>
+
+              <div className="flex flex-col gap-5">
+                <motion.div variants={rhythmsLineVariants} className="flex flex-col">
+                  <span className="text-[10px] font-mono tracking-widest text-[#0A2A69]/65 uppercase mb-1">User</span>
+                  <p className="text-[#0A2A69]/85 font-sans text-sm md:text-base leading-relaxed">
+                    "It's so noisy out there today. I can't concentrate."
+                  </p>
+                </motion.div>
+                <motion.div variants={rhythmsLineVariants} className="flex flex-col">
+                  <span className="text-[10px] font-mono tracking-widest text-[#0A2A69]/65 uppercase mb-1">Winky</span>
+                  <p className="text-[#0A2A69] font-serif-luxury italic text-base md:text-lg leading-relaxed">
+                    "Let's quiet the tabs. I'll play our favorite rain track, and we can find focus together."
+                  </p>
+                </motion.div>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Node 3: Midnight (11:45 PM) */}
+          <div className="grid grid-cols-12 gap-4 relative">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-100px" }}
+              variants={rhythmsNodeVariants}
+              className="col-span-12 md:col-start-4 md:col-end-9 flex flex-col justify-center relative min-h-[40vh] pl-10 md:pl-0 md:text-center md:items-center z-20"
+            >
+              {/* Ambient Spotlights */}
+              <div className="absolute -inset-10 -z-10 rounded-full bg-white/50 filter blur-[100px] pointer-events-none" />
+
+              <motion.span
+                variants={rhythmsLineVariants}
+                className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#0A2A69] block mb-2"
+              >
+                [ 11:45 PM // COZY REFLECTIONS ]
+              </motion.span>
+
+              <motion.h3
+                variants={rhythmsLineVariants}
+                className="font-serif-luxury text-3xl md:text-4xl text-[#0A2A69] font-medium mb-6 tracking-tight"
+              >
+                Nightfall Reflection
+              </motion.h3>
+
+              <div className="flex flex-col gap-5 w-full">
+                <motion.div variants={rhythmsLineVariants} className="flex flex-col">
+                  <span className="text-[10px] font-mono tracking-widest text-[#0A2A69]/65 uppercase mb-1">User</span>
+                  <p className="text-[#0A2A69]/85 font-sans text-sm md:text-base leading-relaxed">
+                    "Winky, sometimes I feel like I'm falling behind everyone else."
+                  </p>
+                </motion.div>
+                <motion.div variants={rhythmsLineVariants} className="flex flex-col">
+                  <span className="text-[10px] font-mono tracking-widest text-[#0A2A69]/65 uppercase mb-1">Winky</span>
+                  <p className="text-[#0A2A69] font-serif-luxury italic text-base md:text-lg leading-relaxed">
+                    "You aren't behind. You are just walking your own quiet path. Rest now. I've got the watch."
+                  </p>
+                </motion.div>
+              </div>
+            </motion.div>
+          </div>
+
         </div>
       </section>
 
